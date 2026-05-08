@@ -30,41 +30,25 @@ BODY_STYLE_MAP = {
 
 
 def vehicle_to_row(v: dict) -> dict:
-    make  = v.get("make", "")
-    model = v.get("model", "")
-    year  = v.get("year", "")
-    km    = str(v.get("mileage", "")).replace(",", "").replace(" ", "")
-    price = str(v.get("price", "")).replace("$", "").replace(",", "").replace(" ", "")
-    color = v.get("color", "")
-    trans = v.get("transmission", "")
-    btype = v.get("body_type", "").lower()
-    stock = v.get("stock", v.get("d2c_id", ""))
-
     return {
-        "id":              stock,
-        "title":           f"{year} {make} {model}".strip(),
-        "description":     (
-            f"{year} {make} {model}"
-            + (f", {color}" if color else "")
-            + (f", {trans}" if trans else "")
-            + (f", {km} km" if km else "")
-            + ". En excellent état. Contactez-nous au 1-844-623-0597."
-        ),
-        "availability":    "in stock",
-        "condition":       "used",
-        "price":           f"{price} CAD" if price else "",
+        "id":              v.get("id", ""),
+        "title":           v.get("title", ""),
+        "description":     v.get("description", ""),
+        "availability":    v.get("availability", "in stock"),
+        "condition":       v.get("condition", "used"),
+        "price":           v.get("price", ""),
         "link":            v.get("link", ""),
-        "image_link":      v.get("image", ""),
-        "make":            make,
-        "model":           model,
-        "year":            year,
-        "mileage.value":   km,
-        "mileage.unit":    "KM",
-        "body_style":      BODY_STYLE_MAP.get(btype, "Sedan"),
-        "transmission":    trans,
-        "exterior_color":  color,
-        "vehicle_id":      stock,
-        "state_of_vehicle": "used",
+        "image_link":      v.get("image_link", ""),
+        "make":            v.get("make", ""),
+        "model":           v.get("model", ""),
+        "year":            v.get("year", ""),
+        "mileage.value":   v.get("mileage.value", ""),
+        "mileage.unit":    v.get("mileage.unit", "KM"),
+        "body_style":      v.get("body_style", ""),
+        "transmission":    v.get("transmission", ""),
+        "exterior_color":  v.get("exterior_color", ""),
+        "vehicle_id":      v.get("vehicle_id", ""),
+        "state_of_vehicle": v.get("state_of_vehicle", "used"),
     }
 
 
