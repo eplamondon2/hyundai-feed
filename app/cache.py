@@ -1,13 +1,13 @@
 """
 Cache simple en mémoire avec TTL.
-Recharge l'inventaire toutes les 6 heures automatiquement.
+Recharge l'inventaire toutes les 1 heure automatiquement.
 """
 import time, logging, threading
 from app.scraper import get_all_vehicles
 
 log = logging.getLogger(__name__)
 
-TTL_SECONDS = 6 * 3600  # 6 heures
+TTL_SECONDS = 1 * 3600  # 1 heure
 
 _cache = {
     "vehicles": [],
