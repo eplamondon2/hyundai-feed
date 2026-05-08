@@ -112,7 +112,19 @@ def _cache_peek():
     """Retourne le cache sans déclencher de refresh."""
     from app.cache import _cache
     return _cache["vehicles"]
-
+@app.route("/debug")
+def debug():
+    import urllib.request
+    url = "https://www.hyundaistraymond.com/js/json/chatboost/inventory/inventory-index.json"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            data = r.read().decode("utf-8")
+            import json
+            parsed = json.loads(data)
+            return jsonify({"status": "ok", "vehicles_found": len(parsed), "first": parsed[0].get("make","?") if parsed else "none"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == "__main__":
     log.info("Chargement initial de l'inventaire...")
