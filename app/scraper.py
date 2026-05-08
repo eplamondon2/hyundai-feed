@@ -107,5 +107,3 @@ def get_all_vehicles() -> list:
 
     log.info(f"{len(vehicles)} véhicules chargés")
     return vehicles
-
-
