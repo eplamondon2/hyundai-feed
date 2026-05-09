@@ -39,12 +39,24 @@ def fetch_json() -> list:
 
 
 def clean_image(url: str) -> str:
-    """Corrige les doubles slashes dans les URLs CDN."""
     if not url:
         return ""
-    # Fix double slash after domain
     url = re.sub(r'(https?://[^/]+)//', r'\1/', url)
     return url
+
+
+def fix_link(link: str, make: str, model: str, is_new: bool) -> str:
+    """Corrige les liens pour qu'ils pointent vers le bon domaine."""
+    if not link or "hyundaistraymond.com" not in link:
+        return f"{BASE_URL}/occasion/recherche.html"
+    # Véhicules usagés
+    link = link.replace("/used/", "/occasion/")
+    # Véhicules neufs : remplacer /new/inventory/ par /neuf/
+    if "/new/inventory/" in link or "/new/" in link:
+        make_slug  = make.strip().replace(" ", "-")
+        model_slug = model.strip().replace(" ", "-")
+        link = f"{BASE_URL}/neuf/{make_slug}-{model_slug}.html"
+    return link
 
 
 def parse_vehicle(v: dict) -> dict:
@@ -56,34 +68,38 @@ def parse_vehicle(v: dict) -> dict:
     trim   = v.get("trim", "")
     price  = str(v.get("Final price", "")).replace(",", "").replace("$", "").strip()
     btype  = v.get("Vehicle Type", "").lower()
-    status = v.get("status", "Used")
-    trans  = v.get("transmission", "") or ""
+    status = str(v.get("status", "Used"))
+    trans  = str(v.get("transmission", "") or "")
+    is_new = "new" in status.lower()
 
-    odo    = v.get("odometer", {})
-    km     = str(odo.get("value", "")).replace(",", "").replace(" ", "")
+    odo = v.get("odometer", {})
+    km  = str(odo.get("value", "")).replace(",", "").replace(" ", "")
+    if not km or km == "0":
+        km = "0"
 
     color  = v.get("color", {})
     ext_fr = color.get("exterior french", "") or color.get("exterior english", "")
 
-    image  = clean_image(v.get("main picture", ""))
-    link   = v.get("Vehicle Details Page (VDP)", "")
-    if not link or "hyundaistraymond.com" not in link:
-        link = f"{BASE_URL}/occasion/recherche.html"
+    image = clean_image(v.get("main picture", ""))
+    link  = fix_link(
+        v.get("Vehicle Details Page (VDP)", ""),
+        make, model, is_new
+    )
 
     desc = v.get("vehicle description", "").strip()
     if not desc:
         desc = (
             f"{year} {make} {model} {trim}".strip()
             + (f", {ext_fr}" if ext_fr else "")
-            + (f", {km} km" if km else "")
+            + (f", {km} km" if km and km != "0" else "")
             + ". Contactez-nous au 1-844-623-0597."
         )
     desc = desc[:5000]
 
-    # Valeurs en majuscules selon specs Meta
-    trans_meta = TRANS_MAP.get(trans.lower(), "OTHER")
-    condition_meta = "GOOD"
+    trans_meta        = TRANS_MAP.get(trans.lower().strip(), "OTHER")
+    condition_meta    = "GOOD"
     availability_meta = "AVAILABLE"
+    state             = "new" if is_new else "used"
 
     return {
         "id":               stock,
@@ -103,7 +119,7 @@ def parse_vehicle(v: dict) -> dict:
         "transmission":     trans_meta,
         "exterior_color":   ext_fr,
         "vehicle_id":       stock,
-        "state_of_vehicle": "used",
+        "state_of_vehicle": state,
         "address":          DEALER_ADDRESS,
     }
 
