@@ -97,8 +97,8 @@ def parse_vehicle(v: dict) -> dict:
     desc = desc[:5000]
 
     trans_meta        = TRANS_MAP.get(trans.lower().strip(), "OTHER")
-    condition_meta    = "GOOD"
-    availability_meta = "AVAILABLE"
+    availability_meta = "in stock"
+    condition_meta    = "used" if not is_new else "new"
     state             = "new" if is_new else "used"
 
     return {
