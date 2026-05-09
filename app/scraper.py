@@ -1,13 +1,14 @@
 """
 Scraper : lit le JSON d'inventaire D2C Media directement.
-URL stable, pas de JavaScript nécessaire, données complètes.
+Valeurs formatées selon les specs Meta Commerce Manager.
 """
-import json, logging
+import json, logging, re
 from urllib.request import Request, urlopen
 from urllib.error import URLError
 
 JSON_URL = "https://www.hyundaistraymond.com/js/json/chatboost/inventory/inventory-index.json"
 BASE_URL  = "https://www.hyundaistraymond.com"
+DEALER_ADDRESS = "484 Côte Joyeuse, Saint-Raymond, QC G3L 4A7, Canada"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -22,6 +23,12 @@ BODY_STYLE_MAP = {
     "wagon": "Wagon", "convertible": "Convertible",
 }
 
+TRANS_MAP = {
+    "automatique": "AUTOMATIC", "automatic": "AUTOMATIC",
+    "manuelle": "MANUAL", "manual": "MANUAL",
+    "man": "MANUAL", "auto": "AUTOMATIC",
+}
+
 log = logging.getLogger(__name__)
 
 
@@ -31,26 +38,37 @@ def fetch_json() -> list:
         return json.loads(r.read().decode("utf-8"))
 
 
+def clean_image(url: str) -> str:
+    """Corrige les doubles slashes dans les URLs CDN."""
+    if not url:
+        return ""
+    # Fix double slash after domain
+    url = re.sub(r'(https?://[^/]+)//', r'\1/', url)
+    return url
+
+
 def parse_vehicle(v: dict) -> dict:
     d2c_id = str(v.get("D2C Vehicle ID", ""))
-    stock  = str(v.get("stock number", d2c_id))
+    stock  = str(v.get("stock number", d2c_id)).strip()
     make   = v.get("make", "")
     model  = v.get("model", "")
     year   = v.get("year", "")
     trim   = v.get("trim", "")
-    price  = v.get("Final price", "")
+    price  = str(v.get("Final price", "")).replace(",", "").replace("$", "").strip()
     btype  = v.get("Vehicle Type", "").lower()
     status = v.get("status", "Used")
+    trans  = v.get("transmission", "") or ""
 
-    odo  = v.get("odometer", {})
-    km   = str(odo.get("value", "")).replace(",", "")
+    odo    = v.get("odometer", {})
+    km     = str(odo.get("value", "")).replace(",", "").replace(" ", "")
 
     color  = v.get("color", {})
     ext_fr = color.get("exterior french", "") or color.get("exterior english", "")
 
-    image = v.get("main picture", "").replace("//mb", "/mb").replace("//cb", "/cb")
-    link  = v.get("Vehicle Details Page (VDP)", f"{BASE_URL}/occasion/recherche.html")
-    link  = link.replace("/used/", "/occasion/")
+    image  = clean_image(v.get("main picture", ""))
+    link   = v.get("Vehicle Details Page (VDP)", "")
+    if not link or "hyundaistraymond.com" not in link:
+        link = f"{BASE_URL}/occasion/recherche.html"
 
     desc = v.get("vehicle description", "").strip()
     if not desc:
@@ -62,12 +80,17 @@ def parse_vehicle(v: dict) -> dict:
         )
     desc = desc[:5000]
 
+    # Valeurs en majuscules selon specs Meta
+    trans_meta = TRANS_MAP.get(trans.lower(), "OTHER")
+    condition_meta = "GOOD"
+    availability_meta = "AVAILABLE"
+
     return {
         "id":               stock,
         "title":            f"{year} {make} {model}".strip(),
         "description":      desc,
-        "availability":     "in stock",
-        "condition":        "used" if "used" in status.lower() else "new",
+        "availability":     availability_meta,
+        "condition":        condition_meta,
         "price":            f"{price} CAD" if price else "",
         "link":             link,
         "image_link":       image,
@@ -77,11 +100,11 @@ def parse_vehicle(v: dict) -> dict:
         "mileage.value":    km,
         "mileage.unit":     "KM",
         "body_style":       BODY_STYLE_MAP.get(btype, "SUV"),
-        "transmission":     "",
+        "transmission":     trans_meta,
         "exterior_color":   ext_fr,
         "vehicle_id":       stock,
-        "state_of_vehicle": "used" if "used" in status.lower() else "new",
-        "vin":              v.get("vin", ""),
+        "state_of_vehicle": "used",
+        "address":          DEALER_ADDRESS,
     }
 
 
