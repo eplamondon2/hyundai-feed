@@ -8,7 +8,7 @@ from urllib.error import URLError
 
 JSON_URL = "https://www.hyundaistraymond.com/js/json/chatboost/inventory/inventory-index.json"
 BASE_URL  = "https://www.hyundaistraymond.com"
-DEALER_ADDRESS = "484 Côte Joyeuse, Saint-Raymond, QC G3L 4A7, Canada"
+DEALER_ADDRESS = "484 Cote Joyeuse, Saint-Raymond, Quebec, G3L4A7, CA"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -97,8 +97,8 @@ def parse_vehicle(v: dict) -> dict:
     desc = desc[:5000]
 
     trans_meta        = TRANS_MAP.get(trans.lower().strip(), "OTHER")
-    availability_meta = "in stock"
-    condition_meta    = "used" if not is_new else "new"
+    availability_meta = "AVAILABLE"
+    condition_meta    = "GOOD"
     state             = "new" if is_new else "used"
 
     return {
