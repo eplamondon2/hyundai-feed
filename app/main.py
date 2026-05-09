@@ -20,7 +20,7 @@ META_FIELDS = [
     "id", "title", "description", "availability", "condition",
     "price", "link", "image_link", "make", "model", "year",
     "mileage.value", "mileage.unit", "body_style", "transmission",
-    "exterior_color", "vehicle_id", "state_of_vehicle",
+    "exterior_color", "vehicle_id", "state_of_vehicle", "address",
 ]
 
 BODY_STYLE_MAP = {
@@ -30,25 +30,41 @@ BODY_STYLE_MAP = {
 
 
 def vehicle_to_row(v: dict) -> dict:
+    make  = v.get("make", "")
+    model = v.get("model", "")
+    year  = v.get("year", "")
+    km    = str(v.get("mileage", "")).replace(",", "").replace(" ", "")
+    price = str(v.get("price", "")).replace("$", "").replace(",", "").replace(" ", "")
+    color = v.get("color", "")
+    trans = v.get("transmission", "")
+    btype = v.get("body_type", "").lower()
+    stock = v.get("stock", v.get("d2c_id", ""))
+
     return {
-        "id":              v.get("id", ""),
-        "title":           v.get("title", ""),
-        "description":     v.get("description", ""),
-        "availability":    v.get("availability", "in stock"),
-        "condition":       v.get("condition", "used"),
-        "price":           v.get("price", ""),
+        "id":              stock,
+        "title":           f"{year} {make} {model}".strip(),
+        "description":     (
+            f"{year} {make} {model}"
+            + (f", {color}" if color else "")
+            + (f", {trans}" if trans else "")
+            + (f", {km} km" if km else "")
+            + ". En excellent état. Contactez-nous au 1-844-623-0597."
+        ),
+        "availability":    "in stock",
+        "condition":       "used",
+        "price":           f"{price} CAD" if price else "",
         "link":            v.get("link", ""),
-        "image_link":      v.get("image_link", ""),
-        "make":            v.get("make", ""),
-        "model":           v.get("model", ""),
-        "year":            v.get("year", ""),
-        "mileage.value":   v.get("mileage.value", ""),
-        "mileage.unit":    v.get("mileage.unit", "KM"),
-        "body_style":      v.get("body_style", ""),
-        "transmission":    v.get("transmission", ""),
-        "exterior_color":  v.get("exterior_color", ""),
-        "vehicle_id":      v.get("vehicle_id", ""),
-        "state_of_vehicle": v.get("state_of_vehicle", "used"),
+        "image_link":      v.get("image", ""),
+        "make":            make,
+        "model":           model,
+        "year":            year,
+        "mileage.value":   km,
+        "mileage.unit":    "KM",
+        "body_style":      BODY_STYLE_MAP.get(btype, "Sedan"),
+        "transmission":    trans,
+        "exterior_color":  color,
+        "vehicle_id":      stock,
+        "state_of_vehicle": "used",
     }
 
 
@@ -96,22 +112,9 @@ def _cache_peek():
     """Retourne le cache sans déclencher de refresh."""
     from app.cache import _cache
     return _cache["vehicles"]
-@app.route("/debug")
-def debug():
-    import urllib.request
-    url = "https://www.hyundaistraymond.com/js/json/chatboost/inventory/inventory-index.json"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=20) as r:
-            data = r.read().decode("utf-8")
-            import json
-            parsed = json.loads(data)
-            return jsonify({"status": "ok", "vehicles_found": len(parsed), "first": parsed[0].get("make","?") if parsed else "none"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+
 
 if __name__ == "__main__":
     log.info("Chargement initial de l'inventaire...")
     get_vehicles()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
