@@ -8,7 +8,7 @@ Routes :
 import csv, io, os, logging
 from flask import Flask, Response, request, jsonify
 from app.cache import get_vehicles, cache_age_minutes
-
+ 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
