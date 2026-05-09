@@ -33,8 +33,18 @@ log = logging.getLogger(__name__)
 
 
 def fetch_json() -> list:
-    req = Request(JSON_URL, headers=HEADERS)
-    with urlopen(req, timeout=20) as r:
+    req = Request(JSON_URL, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "fr-CA,fr;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Referer": "https://www.hyundaistraymond.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+    })
+    with urlopen(req, timeout=60) as r:
         return json.loads(r.read().decode("utf-8"))
 
 
