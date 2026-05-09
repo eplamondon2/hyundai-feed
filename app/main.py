@@ -17,7 +17,7 @@ app = Flask(__name__)
 REFRESH_TOKEN = os.environ.get("REFRESH_TOKEN", "hyundai-straymond-2024")
 
 META_FIELDS = [
-    "id", "title", "description", "availability", "condition",
+    "id", "title", "description", "availability", "condition", 
     "price", "link", "image_link", "make", "model", "year",
     "mileage.value", "mileage.unit", "body_style", "transmission",
     "exterior_color", "vehicle_id", "state_of_vehicle", "address",
