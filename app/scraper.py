@@ -48,7 +48,7 @@ def parse_vehicle(v: dict) -> dict:
     color  = v.get("color", {})
     ext_fr = color.get("exterior french", "") or color.get("exterior english", "")
 
-    image = v.get("main picture", "")
+    image = v.get("main picture", "").replace("//mb", "/mb").replace("//cb", "/cb")
     link  = v.get("Vehicle Details Page (VDP)", f"{BASE_URL}/occasion/recherche.html")
     link  = link.replace("/used/", "/occasion/")
 
