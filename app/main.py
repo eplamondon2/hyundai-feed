@@ -8,7 +8,7 @@ Routes :
 import csv, io, os, logging
 from flask import Flask, Response, request, jsonify
 from app.cache import get_vehicles, cache_age_minutes
- 
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
@@ -17,10 +17,10 @@ app = Flask(__name__)
 REFRESH_TOKEN = os.environ.get("REFRESH_TOKEN", "hyundai-straymond-2024")
 
 META_FIELDS = [
-    "id", "title", "description", "availability", "condition", 
+    "id", "title", "description", "availability", "condition",
     "price", "link", "image_link", "make", "model", "year",
     "mileage.value", "mileage.unit", "body_style", "transmission",
-    "exterior_color", "vehicle_id", "state_of_vehicle", "address",
+    "exterior_color", "vehicle_id", "state_of_vehicle",
 ]
 
 BODY_STYLE_MAP = {
@@ -30,27 +30,15 @@ BODY_STYLE_MAP = {
 
 
 def vehicle_to_row(v: dict) -> dict:
-    return {
-        "id":               v.get("id", ""),
-        "title":            v.get("title", ""),
-        "description":      v.get("description", ""),
-        "availability":     v.get("availability", "AVAILABLE"),
-        "condition":        v.get("condition", "GOOD"),
-        "price":            v.get("price", ""),
-        "link":             v.get("link", ""),
-        "image_link":       v.get("image_link", ""),
-        "make":             v.get("make", ""),
-        "model":            v.get("model", ""),
-        "year":             v.get("year", ""),
-        "mileage.value":    v.get("mileage.value", ""),
-        "mileage.unit":     v.get("mileage.unit", "KM"),
-        "body_style":       v.get("body_style", ""),
-        "transmission":     v.get("transmission", ""),
-        "exterior_color":   v.get("exterior_color", ""),
-        "vehicle_id":       v.get("vehicle_id", ""),
-        "state_of_vehicle": v.get("state_of_vehicle", "used"),
-        "address":          v.get("address", ""),
-    }
+    make  = v.get("make", "")
+    model = v.get("model", "")
+    year  = v.get("year", "")
+    km    = str(v.get("mileage", "")).replace(",", "").replace(" ", "")
+    price = str(v.get("price", "")).replace("$", "").replace(",", "").replace(" ", "")
+    color = v.get("color", "")
+    trans = v.get("transmission", "")
+    btype = v.get("body_type", "").lower()
+    stock = v.get("stock", v.get("d2c_id", ""))
 
     return {
         "id":              stock,
